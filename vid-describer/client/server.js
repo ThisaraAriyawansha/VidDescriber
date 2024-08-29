@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const cv = require('opencv4nodejs');
 const tf = require('@tensorflow/tfjs-node');
 const cocoSsd = require('@tensorflow-models/coco-ssd');
 
@@ -11,29 +10,25 @@ const io = socketIo(server);
 
 let model;
 
-async function loadModel() {
+(async () => {
   model = await cocoSsd.load();
-}
-
-loadModel();
+  console.log('COCO-SSD model loaded');
+})();
 
 io.on('connection', (socket) => {
-  console.log('New client connected');
+  console.log('A user connected');
 
-  socket.on('videoFrame', async (data) => {
-    const frameBuffer = Buffer.from(data.split(',')[1], 'base64');
-    const frame = cv.imdecode(frameBuffer);
-    const predictions = await model.detect(frame);
-    const description = predictions.map(pred => `${pred.class} detected`).join(', ');
-    socket.emit('description', { description });
+  socket.on('videoFrame', async (frame) => {
+    const imgBuffer = Buffer.from(frame.split(',')[1], 'base64');
+    const imgTensor = tf.node.decodeImage(imgBuffer);
+    const predictions = await model.detect(imgTensor);
+    socket.emit('description', { description: JSON.stringify(predictions) });
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    console.log('User disconnected');
   });
 });
-
-app.use(express.static('build')); // Serve static files from the React build
 
 server.listen(8080, () => {
   console.log('Server is running on port 8080');

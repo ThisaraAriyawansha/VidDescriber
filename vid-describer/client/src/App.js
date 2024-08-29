@@ -12,6 +12,10 @@ function App() {
     socket.on('description', (data) => {
       setDescription(data.description);
     });
+
+    return () => {
+      socket.off('description');
+    };
   }, []);
 
   const handleVideoUpload = (event) => {
