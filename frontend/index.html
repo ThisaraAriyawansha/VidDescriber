@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Upload and Description</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #video-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload and Describe Video</h1>
+    <input type="file" id="videoUpload" accept="video/*">
+    <button onclick="uploadVideo()">Upload</button>
+    <div id="video-container">
+        <video id="videoPlayer" width="600" controls></video>
+        <p id="description"></p>
+    </div>
+
+    <script>
+        async function uploadVideo() {
+            const fileInput = document.getElementById('videoUpload');
+            const videoFile = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('video', videoFile);
+
+            try {
+                const response = await fetch('http://localhost:5000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                document.getElementById('videoPlayer').src = URL.createObjectURL(videoFile);
+                document.getElementById('description').textContent = 'Description: ' + data.description;
+            } catch (error) {
+                console.error('Error uploading video:', error);
+            }
+        }
+    </script>
+</body>
+</html>
